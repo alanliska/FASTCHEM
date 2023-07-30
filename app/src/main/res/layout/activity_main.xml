@@ -15,7 +15,7 @@
             android:id="@+id/config_label"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="\nConfiguration file:"
+            android:text="\nConfiguration file \n\n(Do not edit config.input file in inappropriate way, e.g. change the number of lines even if commented. \nPossible alternative database choices: \n/data/data/cz.jh.fastchem/files/database/logK.dat\n/data/data/cz.jh.fastchem/files/database/logK_ext.dat\n/data/data/cz.jh.fastchem/files/database/logK_wo_ions.dat\nor load external database through Scoped Storage Access):"
             android:textAppearance="@android:style/TextAppearance.StatusBar.Title" />
         <EditText
             android:id="@+id/config"
@@ -150,6 +150,17 @@
             android:layout_height="wrap_content"
             android:backgroundTint="#FFEB3B"
             android:text="Highlight the output" />
+        <Button
+            android:id="@+id/manual"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:backgroundTint="#00AABB"
+            android:text="FASTCHEM MANUAL" />
+        <Button
+            android:id="@+id/License"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="LICENSES" />
         <Button
             android:id="@+id/about"
             android:layout_width="match_parent"

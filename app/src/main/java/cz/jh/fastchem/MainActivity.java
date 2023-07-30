@@ -5,6 +5,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.graphics.Color;
@@ -15,6 +16,7 @@ import android.os.Handler;
 import android.os.ParcelFileDescriptor;
 import androidx.appcompat.app.AlertDialog;
 
+import android.preference.PreferenceManager;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
@@ -30,16 +32,20 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -82,6 +88,12 @@ public class MainActivity extends AppCompatActivity {
     private TextView outputView;
     private EditText outputView2;
     private Handler handler = new Handler();
+    private Button manual;
+    private Button license;
+
+    static final String LOGTAG = "";
+    static final int BUFSIZE = 5192;
+    static final String ZIP_FILTER = "assets";
 
     /**
      * Colorize a specific substring in a string for TextView. Use it like this: <pre>
@@ -228,12 +240,9 @@ public class MainActivity extends AppCompatActivity {
         }
         return spannable;
     }
-    /**
-     * Called when the activity is first created.
-     */
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -242,9 +251,7 @@ public class MainActivity extends AppCompatActivity {
         atmospheric_profile_label = (TextView) findViewById(R.id.atmospheric_profile_label);
         atmospheric_profile = (EditText) findViewById(R.id.atmospheric_profile);
         openatmofile = (Button) findViewById(R.id.openatmofile);
-//        openatmofile.setOnClickListener(openatmofileClick);
         openatmofile2 = (Button) findViewById(R.id.openatmofile2);
-//        openatmofile2.setOnClickListener(openatmofile2Click);
         saveatmofile = (Button) findViewById(R.id.saveatmofile);
         saveatmofile.setOnClickListener(saveatmofileClick);
         saveatmofile2 = (Button) findViewById(R.id.saveatmofile2);
@@ -252,17 +259,13 @@ public class MainActivity extends AppCompatActivity {
         abundance_label = (TextView) findViewById(R.id.abundance_label);
         abundance = (EditText) findViewById(R.id.abundance);
         openabundfile = (Button) findViewById(R.id.openabundfile);
-//        openabundfile.setOnClickListener(openabundfileClick);
         openabundfile2 = (Button) findViewById(R.id.openabundfile2);
-//        openabundfile2.setOnClickListener(openabundfile2Click);
         saveabundfile = (Button) findViewById(R.id.saveabundfile);
         saveabundfile.setOnClickListener(saveabundfileClick);
         saveabundfile2 = (Button) findViewById(R.id.saveabundfile2);
         saveabundfile2.setOnClickListener(saveabundfile2Click);
         database1 = (Button) findViewById(R.id.database1);
-//        database1.setOnClickListener(database1Click);
         database2 = (Button) findViewById(R.id.database2);
-//        database2.setOnClickListener(database2Click);
         run = (Button) findViewById(R.id.run);
         run.setOnClickListener(runClick);
         saveoutputfile = (Button) findViewById(R.id.saveoutputfile);
@@ -330,27 +333,27 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        {
-            copyAsset("abundances.dat");copyAsset("atmospheric-profile.dat");copyAsset("database.dat");copyAsset("config.input");copyAsset("About.txt");
-        }
-        {
-            copyAsset1("AGB_stellar_wind.dat");copyAsset1("Gliese_229b.dat");
-            copyAsset1("Kepler-7b.dat");copyAsset1("Late_M-dwarf.dat");
-        }
-        {
-            copyAsset2("element_abundances_solar.dat");copyAsset2("element_abundances_solar_ext.dat");
-        }
-        {
-            copyAsset3("logK.dat");
-            copyAsset3("logK_ext.dat");
-            copyAsset3("logK_wo_ions.dat");
-        }
-        {
-            copyAsset4("fastchem_manual.pdf");
-            copyAsset4("Trick.txt");
-            copyAsset4("LICENSE-TRANSPOSE.txt");
+        license = (Button) findViewById(R.id.License);
+        license.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, Licenses.class);
+                startActivity(intent);
+            }
+        });
 
-        copyAsset4("LICENSE-FASTCHEM.txt");}
+        manual = (Button) findViewById(R.id.manual);
+        manual.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, Manual.class);
+                startActivity(intent);
+            }
+        });
+
+
+
+
 
         // give the app permissions to access the storage
         {
@@ -371,207 +374,93 @@ public class MainActivity extends AppCompatActivity {
             }
             ;
         }
+
+        SharedPreferences wmbPreference = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean isFirstRun = wmbPreference.getBoolean("FIRSTRUN", true);
+        SharedPreferences.Editor editor = wmbPreference.edit();
+
+        if (isFirstRun){
+
+            ProgressDialog progressDialog = new ProgressDialog(MainActivity.this);
+            progressDialog.setTitle("Please wait...");
+            progressDialog.setMessage("Installing FASTCHEM. It may take a while.");
+            progressDialog.show();
+            new Thread() {
+                public void run() {
+
+
+                    copyFromAssetsToInternalStorage("assets.zip");
+                    copyFromAssetsToInternalStorage("abundances.dat");
+                    copyFromAssetsToInternalStorage("atmospheric-profile.dat");
+                    copyFromAssetsToInternalStorage("config.input");
+                    copyFromAssetsToInternalStorage("database.dat");
+                    String zipFilePath = getFilesDir()+"/assets.zip";
+                    String destDir = getFilesDir()+"/" ;
+//                    unzipfile( zipFilePath, destDir ) ;
+                    try {
+                        unzip(new File(zipFilePath),destDir);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    exec("rm "+getFilesDir()+"/assets.zip");
+//                    unZipFile(getFilesDir()+"/assets.zip");
+
+//                    unzipAssets(MainActivity.this);
+//                    copyAsset("assets.zip");
+                    exec("mkdir "+Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)+"/fastchem");
+//                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+//                    imm.hideSoftInputFromWindow(ErgoInput.getWindowToken(), 0);
+//                String command = ErgoInput.getText().toString();
+//                    String command = "export HOME="+getFilesDir()+"/ ; cd $HOME ; unzip assets.zip ; rm assets.zip ; chmod -R 755 *";
+//                    new RunCommandTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, command);
+                    exec("chmod -R 755 "+getFilesDir()+"/");
+                    output_conf(exec("cat "+getFilesDir()+"/config.input"));
+                    output_elem(exec("cat "+getFilesDir()+"/abundances.dat"));
+                    output_atmo(exec("cat "+getFilesDir()+"/atmospheric-profile.dat"));
+
+                    onFinish();
+                }
+                public void onFinish(){
+                    progressDialog.dismiss();
+                }
+            }.start();
+            editor.putBoolean("FIRSTRUN", false);
+            editor.apply();
+        }
     }
 
     private void copyAsset(String filename) {
         File filePath = new File(getFilesDir()+"");
-        String path = getFilesDir()+"/doc"+File.separator+"LICENSE-FASTCHEM.txt";
-        File check = new File(path);
-        if (!check.exists()) {
-            if (!filePath.exists()) {
-                filePath.mkdirs();
-            }
-            AssetManager assetManager = getAssets();
-            InputStream in = null;
-            OutputStream out = null;
-            try {
-                in = assetManager.open(filename);
-                File outFile = new File(filePath, filename);
-                out = new FileOutputStream(outFile);
-                copyFile(in, out);
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                if (in != null) {
-                    try {
-                        in.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-                if (out != null) {
-                    try {
-                        out.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+        if (!filePath.exists()) {
+            filePath.mkdirs();
+        }
+        AssetManager assetManager = getAssets();
+        InputStream in = null;
+        OutputStream out = null;
+        try {
+            in = assetManager.open(filename);
+            File outFile = new File(filePath, filename);
+            out = new FileOutputStream(outFile);
+            copyFile(in, out);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
-        } else {
-            // do nothing
+            if (out != null) {
+                try {
+                    out.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
-
-    private void copyAsset1(String filename) {
-        String dirPath = getFilesDir()+"/atmospheric-profiles";
-        String path = getFilesDir()+"/doc"+File.separator+"LICENSE-FASTCHEM.txt";
-        File check = new File(path);
-        File dir = new File(dirPath);
-        if (!check.exists()) {
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
-            AssetManager assetManager = getAssets();
-            InputStream in = null;
-            OutputStream out = null;
-            try {
-                in = assetManager.open(filename);
-                File outFile = new File(dirPath, filename);
-                out = new FileOutputStream(outFile);
-                copyFile(in, out);
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                if (in != null) {
-                    try {
-                        in.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-                if (out != null) {
-                    try {
-                        out.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        } else {
-            // do nothing
-        }
-    }
-
-    private void copyAsset2(String filename) {
-        String dirPath = getFilesDir()+"/element-abundances";
-        String path = getFilesDir()+"/doc"+File.separator+"LICENSE-FASTCHEM.txt";
-        File check = new File(path);
-        File dir = new File(dirPath);
-        if (!check.exists()) {
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
-            AssetManager assetManager = getAssets();
-            InputStream in = null;
-            OutputStream out = null;
-            try {
-                in = assetManager.open(filename);
-                File outFile = new File(dirPath, filename);
-                out = new FileOutputStream(outFile);
-                copyFile(in, out);
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                if (in != null) {
-                    try {
-                        in.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-                if (out != null) {
-                    try {
-                        out.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        } else {
-            // do nothing
-        }
-    }
-
-    private void copyAsset3(String filename) {
-        String dirPath = getFilesDir()+"/database";
-        String path = getFilesDir()+"/doc"+File.separator+"LICENSE-FASTCHEM.txt";
-        File check = new File(path);
-        File dir = new File(dirPath);
-        if (!check.exists()) {
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
-            AssetManager assetManager = getAssets();
-            InputStream in = null;
-            OutputStream out = null;
-            try {
-                in = assetManager.open(filename);
-                File outFile = new File(dirPath, filename);
-                out = new FileOutputStream(outFile);
-                copyFile(in, out);
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                if (in != null) {
-                    try {
-                        in.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-                if (out != null) {
-                    try {
-                        out.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        } else {
-            // do nothing
-        }
-    }
-
-    private void copyAsset4(String filename) {
-        String dirPath = getFilesDir()+"/doc";
-        String path = getFilesDir()+"/doc"+File.separator+"LICENSE-FASTCHEM.txt";
-        File check = new File(path);
-        File dir = new File(dirPath);
-        if (!check.exists()) {
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
-            AssetManager assetManager = getAssets();
-            InputStream in = null;
-            OutputStream out = null;
-            try {
-                in = assetManager.open(filename);
-                File outFile = new File(dirPath, filename);
-                out = new FileOutputStream(outFile);
-                copyFile(in, out);
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                if (in != null) {
-                    try {
-                        in.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-                if (out != null) {
-                    try {
-                        out.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        } else {
-            // do nothing
-        }
-    }
-
 
     private void copyFile(InputStream in, OutputStream out) throws IOException {
         byte[] buffer = new byte[1024];
@@ -579,14 +468,12 @@ public class MainActivity extends AppCompatActivity {
         while ((read = in.read(buffer)) != -1){
             out.write(buffer, 0, read);
         }
-
     }
 
-    @Override
     public void onStart()
     {
         super.onStart();
-        exec("chmod 755 "+getFilesDir()+"/Input.txt");
+
         output_conf(exec("cat "+getFilesDir()+"/config.input"));
         output_elem(exec("cat "+getFilesDir()+"/abundances.dat"));
         output_atmo(exec("cat "+getFilesDir()+"/atmospheric-profile.dat"));
@@ -1390,4 +1277,126 @@ public class MainActivity extends AppCompatActivity {
             throw new RuntimeException(e);
         }
     }
+
+
+
+    protected void copyFromAssetsToInternalStorage(String filename){
+        AssetManager assetManager = getAssets();
+
+        try {
+            InputStream input = assetManager.open(filename);
+            OutputStream output = openFileOutput(filename, Context.MODE_PRIVATE);
+
+            copyFile2(input, output);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void unZipFile(String filename){
+        try {
+            ZipInputStream zipInputStream = new ZipInputStream(openFileInput(filename));
+            ZipEntry zipEntry;
+
+            while((zipEntry = zipInputStream.getNextEntry()) != null){
+                FileOutputStream zipOutputStream = openFileOutput(zipEntry.getName(), MODE_PRIVATE);
+
+                int length;
+                byte[] buffer = new byte[1024];
+
+                while((length = zipInputStream.read(buffer)) > 0){
+                    zipOutputStream.write(buffer, 0, length);
+                }
+
+                zipOutputStream.close();
+                zipInputStream.closeEntry();
+            }
+            zipInputStream.close();
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void copyFile2(InputStream in, OutputStream out) throws IOException {
+        byte[] buffer = new byte[1024];
+        int read;
+        while((read = in.read(buffer)) != -1){
+            out.write(buffer, 0, read);
+        }
+    }
+
+    private static void unzipfile( String zipFilePath, String destDir ) {
+        File dir = new File( destDir ) ;
+        // creating an output directory if it doesn't exist already
+        if( !dir.exists( ) ) dir.mkdirs( ) ;
+        FileInputStream FiS ;
+        // buffer to read and write data in the file
+        byte[ ] buffer = new byte[ 1024 ] ;
+        try {
+            FiS = new FileInputStream( zipFilePath ) ;
+            ZipInputStream ZiS = new ZipInputStream( FiS ) ;
+            ZipEntry ZE = ZiS.getNextEntry( ) ;
+            while( ZE != null ) {
+                String fileName = ZE.getName( ) ;
+                File newFile = new File( destDir + File.separator + fileName ) ;
+                System.out.println( " Unzipping to " + newFile.getAbsolutePath( ) ) ;
+                // create directories for sub directories in zip
+                new File( newFile.getParent( ) ).mkdirs( ) ;
+                FileOutputStream FoS = new FileOutputStream( newFile ) ;
+                int len ;
+                while ( ( len = ZiS.read( buffer ) )  > 0 ) {
+                    FoS.write( buffer, 0, len ) ;
+                }
+                FoS.close( ) ;
+                // close this ZipEntry
+                ZiS.closeEntry( ) ;
+                ZE = ZiS.getNextEntry( ) ;
+            }
+            // close last ZipEntry
+            ZiS.closeEntry( ) ;
+            ZiS.close( ) ;
+            FiS.close( ) ;
+        } catch ( IOException e ) {
+            e.printStackTrace( ) ;
+        }
+    }
+
+    public static void unzip(File source, String out) throws IOException {
+        try (ZipInputStream zis = new ZipInputStream(new FileInputStream(source))) {
+
+            ZipEntry entry = zis.getNextEntry();
+
+            while (entry != null) {
+
+                File file = new File(out, entry.getName());
+
+                if (entry.isDirectory()) {
+                    file.mkdirs();
+                } else {
+                    File parent = file.getParentFile();
+
+                    if (!parent.exists()) {
+                        parent.mkdirs();
+                    }
+
+                    try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(file))) {
+
+                        int bufferSize = Math.toIntExact(entry.getSize());
+                        byte[] buffer = new byte[bufferSize > 0 ? bufferSize : 1];
+                        int location;
+
+                        while ((location = zis.read(buffer)) != -1) {
+                            bos.write(buffer, 0, location);
+                        }
+                    }
+                }
+                entry = zis.getNextEntry();
+            }
+        }
+    }
+
 }

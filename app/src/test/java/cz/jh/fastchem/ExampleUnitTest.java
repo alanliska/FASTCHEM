@@ -1,4 +1,4 @@
-package cz.jh.fastchem;
+package cz.jh.ergo;
 
 import org.junit.Test;
 
