@@ -20,8 +20,14 @@ Android app development:
 © J. Heyrovský Institute of Physical Chemistry (Prague, Czech Republic), 2019-2023
  Alan Liška
  Veronika Rùžièková
+ 
+IMPORTANT !!!
+Although this app is composed of open-source codes and resources, licenses for some components require the users to cite the original references when publishing the results. Please check all the licensing information under the buttons 'License' and 'About the app'.
+All the users of the FASTCHEM app comply by downloading, installing and using it with all the licensing conditions of the individual software components and take the responsibility for keeping them. 
 
 App source code: https://github.com/alanliska/FASTCHEM
+
+==================================================================================================
 
 Licenses and references to used third-party software:
 
