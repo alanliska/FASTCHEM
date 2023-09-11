@@ -33,6 +33,7 @@
         <activity android:name="cz.jh.fastchem.SelectAbundFile" />
         <activity android:name="cz.jh.fastchem.SelectAtmoFile" />
         <activity android:name="cz.jh.fastchem.SelectDataFile" />
+        <activity android:name="cz.jh.fastchem.SelectDataFileCond" />
     </application>
 
 </manifest>

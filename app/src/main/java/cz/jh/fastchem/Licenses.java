@@ -31,6 +31,9 @@ public class Licenses extends MainActivity {
     Button license_fastchem;
     Button licensing_terms_fastchem;
     Button license_transpose;
+    Button license_android_shell;
+    Button license_eigen3;
+    Button licensing_terms_eigen3;
     Button quit;
 
     @Override
@@ -50,6 +53,15 @@ public class Licenses extends MainActivity {
         licensing_terms_fastchem.setOnClickListener(licensing_terms_fastchemClick);
         license_transpose = (Button) findViewById(R.id.license_transpose);
         license_transpose.setOnClickListener(license_transposeClick);
+
+        license_android_shell = (Button) findViewById(R.id.license_android_shell);
+        license_android_shell.setOnClickListener(license_android_shellClick);
+
+        license_eigen3 = (Button) findViewById(R.id.license_eigen3);
+        license_eigen3.setOnClickListener(license_eigen3Click);
+
+        licensing_terms_eigen3 = (Button) findViewById(R.id.licensing_terms_eigen3);
+        licensing_terms_eigen3.setOnClickListener(licensing_terms_eigen3Click);
 
         quit = (Button) findViewById(R.id.quit);
         quit.setOnClickListener(new View.OnClickListener() {
@@ -75,6 +87,66 @@ public class Licenses extends MainActivity {
         new AlertDialog.Builder(Licenses.this)
                 .setTitle("LICENSE-ACPDFVIEW")
                 .setMessage(exec("cat "+getFilesDir()+"/licenses/LICENSE-ACPDFVIEW.txt"))
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                }).show();
+    }
+
+    private View.OnClickListener license_android_shellClick; {
+        license_android_shellClick = new View.OnClickListener() {
+            public void onClick(View v) {
+                // TODO Auto-generated method stub //
+                alert1as();
+            }
+        };
+    }
+
+    public void alert1as() {
+        new AlertDialog.Builder(Licenses.this)
+                .setTitle("LICENSE-ANDROID-SHELL")
+                .setMessage(exec("cat "+getFilesDir()+"/licenses/LICENSE-ANDROID_SHELL.txt"))
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                }).show();
+    }
+
+    private View.OnClickListener license_eigen3Click; {
+        license_eigen3Click = new View.OnClickListener() {
+            public void onClick(View v) {
+                // TODO Auto-generated method stub //
+                alert1eigen3();
+            }
+        };
+    }
+
+    public void alert1eigen3() {
+        new AlertDialog.Builder(Licenses.this)
+                .setTitle("LICENSE-EIGEN3")
+                .setMessage(exec("cat "+getFilesDir()+"/licenses/LICENSE-EIGEN3.txt"))
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                }).show();
+    }
+
+    private View.OnClickListener licensing_terms_eigen3Click; {
+        licensing_terms_eigen3Click = new View.OnClickListener() {
+            public void onClick(View v) {
+                // TODO Auto-generated method stub //
+                alert2eigen3();
+            }
+        };
+    }
+
+    public void alert2eigen3() {
+        new AlertDialog.Builder(Licenses.this)
+                .setTitle("LICENSING-TERMS-EIGEN3")
+                .setMessage(exec("cat "+getFilesDir()+"/licenses/LICENSING-TERMS-EIGEN3.txt"))
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         dialog.cancel();

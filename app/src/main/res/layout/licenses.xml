@@ -25,6 +25,21 @@
             android:layout_height="wrap_content"
             android:text="LICENSE-ACPDFVIEW" />
         <Button
+            android:id="@+id/license_android_shell"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="LICENSE-ANDROID-SHELL" />
+        <Button
+            android:id="@+id/license_eigen3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="LICENSE-EIGEN3" />
+        <Button
+            android:id="@+id/licensing_terms_eigen3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="LICENSING-TERMS-EIGEN3" />
+        <Button
             android:id="@+id/license_fastchem"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

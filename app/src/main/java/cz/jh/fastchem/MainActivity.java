@@ -55,12 +55,14 @@ public class MainActivity extends AppCompatActivity {
     private static final int READ_FILE1 = 4;
     private static final int READ_FILE2 = 5;
     private static final int READ_FILE3 = 6;
+    private static final int READ_FILE30 = 60;
     private Uri documentUri1;
     private Uri documentUri2;
     private Uri documentUri3;
     private Uri documentUri4;
     private Uri documentUri5;
     private Uri documentUri6;
+    private Uri documentUri60;
     private static final int MY_PERMISSION_REQUEST_STORAGE = 1;
     private TextView config_label;
     private EditText config;
@@ -78,10 +80,12 @@ public class MainActivity extends AppCompatActivity {
     private Button saveabundfile2;
     private Button database1;
     private Button database2;
+    private Button database1cond;
+    private Button database2cond;
     private Button run;
     private Button saveoutputfile;
     private Button saveoutputfile2;
-    private Button transpose;
+//    private Button transpose;
     private Button highlight;
     private Button about;
     private TextView textViewX;
@@ -266,14 +270,16 @@ public class MainActivity extends AppCompatActivity {
         saveabundfile2.setOnClickListener(saveabundfile2Click);
         database1 = (Button) findViewById(R.id.database1);
         database2 = (Button) findViewById(R.id.database2);
+        database1cond = (Button) findViewById(R.id.database1cond);
+        database2cond = (Button) findViewById(R.id.database2cond);
         run = (Button) findViewById(R.id.run);
         run.setOnClickListener(runClick);
         saveoutputfile = (Button) findViewById(R.id.saveoutputfile);
         saveoutputfile.setOnClickListener(saveoutputfileClick);
         saveoutputfile2 = (Button) findViewById(R.id.saveoutputfile2);
         saveoutputfile2.setOnClickListener(saveoutputfile2Click);
-        transpose = (Button) findViewById(R.id.transpose);
-        transpose.setOnClickListener(transposeClick);
+//        transpose = (Button) findViewById(R.id.transpose);
+//        transpose.setOnClickListener(transposeClick);
         highlight = (Button) findViewById(R.id.highlight);
         highlight.setOnClickListener(highlightClick);
         about = (Button) findViewById(R.id.about);
@@ -325,11 +331,28 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        database1cond = (Button) findViewById(R.id.database1cond);
+        database1cond.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, SelectDataFileCond.class);
+                startActivity(intent);
+            }
+        });
+
         database2 = (Button) findViewById(R.id.database2);
         database2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 read3(getApplicationContext());
+            }
+        });
+
+        database2cond = (Button) findViewById(R.id.database2cond);
+        database2cond.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                read30(getApplicationContext());
             }
         });
 
@@ -394,6 +417,7 @@ public class MainActivity extends AppCompatActivity {
                     copyFromAssetsToInternalStorage("atmospheric-profile.dat");
                     copyFromAssetsToInternalStorage("config.input");
                     copyFromAssetsToInternalStorage("database.dat");
+                    copyFromAssetsToInternalStorage("database_cond.dat");
                     String zipFilePath = getFilesDir()+"/assets.zip";
                     String destDir = getFilesDir()+"/" ;
 //                    unzipfile( zipFilePath, destDir ) ;
@@ -536,7 +560,8 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     exec("chmod 755 -R "+getFilesDir());
                     try {
-                        exec(getApplicationInfo().nativeLibraryDir+"/libfastchem.so "+getFilesDir()+"/config.input");
+                        com.jrummyapps.android.shell.Shell.SH.run("export HOME=/data/data/cz.jh.fastchem/files ; cd $HOME ; "+getApplicationInfo().nativeLibraryDir+"/libfastchem.so config.input > monitor.dat ; "+getApplicationInfo().nativeLibraryDir+"/libtranspose.so -t condensates.dat > condensates_trans.dat ; "+getApplicationInfo().nativeLibraryDir+"/libtranspose.so -t chemistry.dat > chemistry_trans.dat ; rm condensates.dat ; rm chemistry.dat ; mv chemistry_trans.dat chemistry.dat ; cat condensates_trans.dat >> chemistry.dat ; cat monitor.dat >> chemistry.dat ; rm condensates_trans.dat");
+//                        exec(getApplicationInfo().nativeLibraryDir+"/libfastchem.so "+getFilesDir()+"/config.input");
                         output2(exec("cat "+getFilesDir()+"/chemistry.dat"));
                         output("Staying idle.");
                     } catch (Exception e) {
@@ -875,98 +900,98 @@ public class MainActivity extends AppCompatActivity {
         }.start();
     }
 
-    private View.OnClickListener transposeClick; {
-
-        transposeClick = new View.OnClickListener() {
-            public void onClick(View v) {
-
-                String configfile = config.getText().toString();
-                try {
-                    FileOutputStream fileout = openFileOutput("config.input", MODE_PRIVATE);
-                    OutputStreamWriter outputWriter = new OutputStreamWriter(fileout);
-                    outputWriter.write(configfile);
-                    outputWriter.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                String atmofile = atmospheric_profile.getText().toString();
-                try {
-                    FileOutputStream fileout = openFileOutput("atmospheric-profile.dat", MODE_PRIVATE);
-                    OutputStreamWriter outputWriter = new OutputStreamWriter(fileout);
-                    outputWriter.write(atmofile);
-                    outputWriter.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                String abundfile = abundance.getText().toString();
-                try {
-                    FileOutputStream fileout = openFileOutput("abundances.dat", MODE_PRIVATE);
-                    OutputStreamWriter outputWriter = new OutputStreamWriter(fileout);
-                    outputWriter.write(abundfile);
-                    outputWriter.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                // TODO Auto-generated method stub //
-                opentransposedialog();
-            }
-        };
-    }
-
-
-    private void opentransposedialog() {
-        // TODO Auto-generated method stub //
-        ProgressDialog progressDialog = new ProgressDialog(MainActivity.this);
-        progressDialog.setTitle("Please wait...");
-        progressDialog.setMessage("Transposing the output is in progress...");
-        progressDialog.setCancelable(false);
-        progressDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
-        });
-        progressDialog.show();
-
-        new Thread() {
-            public void run() {
-                try {
-                    String Results = outputView2.getText().toString();
-                    FileOutputStream fileout = openFileOutput("Output.txt", MODE_PRIVATE);
-                    OutputStreamWriter outputWriter = new OutputStreamWriter(fileout);
-                    outputWriter.write(Results);
-                    outputWriter.close();
-
-                    output2(exec(getApplicationInfo().nativeLibraryDir+"/libtranspose.so -t "+getFilesDir()+"/Output.txt"));
-                    output("Columns and rows were transposed.");
-
-
-                    output_conf(exec("cat "+getFilesDir()+"/config.input"));
-                    output_elem(exec("cat "+getFilesDir()+"/abundances.dat"));
-                    output_atmo(exec("cat "+getFilesDir()+"/atmospheric-profile.dat"));
-
-                    Toast.makeText(getApplicationContext(), "Numbers highlighted.", Toast.LENGTH_SHORT).show();
-                } catch (Exception e) {
-                }
-
-                onFinish();
-            }
-
-            // for displaying the output in the second TextView there must be different output2 than output, including the str2/proc2 variables
-            public void outputX(final String strX) {
-                Runnable procX = new Runnable() {
-                    public void run() {
-                        outputView2.setText(colorized(strX, "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "+", "-", Color.RED));
-                    }
-                };
-                handler.post(procX);
-            }
-
-            public void onFinish() {
-                progressDialog.dismiss();
-            }
-        }.start();
-    }
+//    private View.OnClickListener transposeClick; {
+//
+//        transposeClick = new View.OnClickListener() {
+//            public void onClick(View v) {
+//
+//                String configfile = config.getText().toString();
+//                try {
+//                    FileOutputStream fileout = openFileOutput("config.input", MODE_PRIVATE);
+//                    OutputStreamWriter outputWriter = new OutputStreamWriter(fileout);
+//                    outputWriter.write(configfile);
+//                    outputWriter.close();
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//                String atmofile = atmospheric_profile.getText().toString();
+//                try {
+//                    FileOutputStream fileout = openFileOutput("atmospheric-profile.dat", MODE_PRIVATE);
+//                    OutputStreamWriter outputWriter = new OutputStreamWriter(fileout);
+//                    outputWriter.write(atmofile);
+//                    outputWriter.close();
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//                String abundfile = abundance.getText().toString();
+//                try {
+//                    FileOutputStream fileout = openFileOutput("abundances.dat", MODE_PRIVATE);
+//                    OutputStreamWriter outputWriter = new OutputStreamWriter(fileout);
+//                    outputWriter.write(abundfile);
+//                    outputWriter.close();
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//                // TODO Auto-generated method stub //
+//                opentransposedialog();
+//            }
+//        };
+//    }
+//
+//
+//    private void opentransposedialog() {
+//        // TODO Auto-generated method stub //
+//        ProgressDialog progressDialog = new ProgressDialog(MainActivity.this);
+//        progressDialog.setTitle("Please wait...");
+//        progressDialog.setMessage("Transposing the output is in progress...");
+//        progressDialog.setCancelable(false);
+//        progressDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancel", new DialogInterface.OnClickListener() {
+//            @Override
+//            public void onClick(DialogInterface dialog, int which) {
+//                dialog.dismiss();
+//            }
+//        });
+//        progressDialog.show();
+//
+//        new Thread() {
+//            public void run() {
+//                try {
+//                    String Results = outputView2.getText().toString();
+//                    FileOutputStream fileout = openFileOutput("Output.txt", MODE_PRIVATE);
+//                    OutputStreamWriter outputWriter = new OutputStreamWriter(fileout);
+//                    outputWriter.write(Results);
+//                    outputWriter.close();
+//
+//                    output2(exec(getApplicationInfo().nativeLibraryDir+"/libtranspose.so -t "+getFilesDir()+"/Output.txt"));
+//                    output("Columns and rows were transposed.");
+//
+//
+//                    output_conf(exec("cat "+getFilesDir()+"/config.input"));
+//                    output_elem(exec("cat "+getFilesDir()+"/abundances.dat"));
+//                    output_atmo(exec("cat "+getFilesDir()+"/atmospheric-profile.dat"));
+//
+//                    Toast.makeText(getApplicationContext(), "Numbers highlighted.", Toast.LENGTH_SHORT).show();
+//                } catch (Exception e) {
+//                }
+//
+//                onFinish();
+//            }
+//
+//            // for displaying the output in the second TextView there must be different output2 than output, including the str2/proc2 variables
+//            public void outputX(final String strX) {
+//                Runnable procX = new Runnable() {
+//                    public void run() {
+//                        outputView2.setText(colorized(strX, "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "+", "-", Color.RED));
+//                    }
+//                };
+//                handler.post(procX);
+//            }
+//
+//            public void onFinish() {
+//                progressDialog.dismiss();
+//            }
+//        }.start();
+//    }
 
 
     private View.OnClickListener saveoutputfile2Click; {
@@ -1022,6 +1047,13 @@ public class MainActivity extends AppCompatActivity {
         intent6.addCategory(Intent.CATEGORY_OPENABLE);
         intent6.setType("text/plain");
         startActivityForResult(intent6, READ_FILE3);
+    }
+
+    private void read30(Context context60) {
+        Intent intent60 = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent60.addCategory(Intent.CATEGORY_OPENABLE);
+        intent60.setType("text/plain");
+        startActivityForResult(intent60, READ_FILE30);
     }
 
     private View.OnClickListener aboutClick; {
@@ -1212,7 +1244,32 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(), "File not read", Toast.LENGTH_SHORT).show();
             }
         }
-
+        if (requestCode == READ_FILE30 && data != null) {
+            // open database file
+            try {
+                documentUri60 = data.getData();
+                String myData = "";
+                ParcelFileDescriptor pfd60 = getContentResolver().openFileDescriptor(data.getData(), "r");
+                FileInputStream fileInputStream = new FileInputStream(pfd60.getFileDescriptor());
+                DataInputStream inp = new DataInputStream(fileInputStream);
+                BufferedReader br = new BufferedReader(new InputStreamReader(inp));
+                String strLine;
+                while ((strLine = br.readLine()) != null) {
+                    myData = myData + strLine + "\n";
+                }
+                inp.close();
+                FileOutputStream fileout = openFileOutput("database_cond.dat", MODE_PRIVATE);
+                OutputStreamWriter outputWriter = new OutputStreamWriter(fileout);
+                outputWriter.write(myData);
+                outputWriter.close();
+                fileInputStream.close();
+                pfd60.close();
+                Toast.makeText(getApplicationContext(), "File read successfully.", Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                e.printStackTrace();
+                Toast.makeText(getApplicationContext(), "File not read", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     // for displaying the output in the second TextView there must be different output3 than output, including the str3/proc3 variables

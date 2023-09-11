@@ -15,7 +15,7 @@
             android:id="@+id/config_label"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="\nConfiguration file \n\n(Do not edit config.input file in inappropriate way, e.g. change the number of lines even if commented. \nPossible alternative database choices: \n/data/data/cz.jh.fastchem/files/database/logK.dat\n/data/data/cz.jh.fastchem/files/database/logK_ext.dat\n/data/data/cz.jh.fastchem/files/database/logK_wo_ions.dat\nor load external database through Scoped Storage Access):"
+            android:text="\nConfiguration file \n\n(Do not edit config.input file in inappropriate way, e.g. change the number of lines even if commented. \nPossible alternative database choices: \n/data/data/cz.jh.fastchem/files/database/logK.dat\n/data/data/cz.jh.fastchem/files/database/logK_condensates.dat\n/data/data/cz.jh.fastchem/files/database/logK_extended.dat\n/data/data/cz.jh.fastchem/files/database/logK_wo_ions.dat\nor load external database through Scoped Storage Access):"
             android:textAppearance="@android:style/TextAppearance.StatusBar.Title" />
         <EditText
             android:id="@+id/config"
@@ -112,14 +112,28 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:backgroundTint="#E99963"
-            android:text="LOAD INTERNAL DATABASE" />
+            android:text="LOAD INTERNAL GAS DATABASE" />
 
         <Button
             android:id="@+id/database2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:backgroundTint="#E99963"
-            android:text="LOAD EXTERNAL DATABASE" />
+            android:text="LOAD EXTERNAL GAS DATABASE" />
+
+        <Button
+            android:id="@+id/database1cond"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:backgroundTint="#E99963"
+            android:text="LOAD INTERNAL LIQUID/SOLID DATABASE" />
+
+        <Button
+            android:id="@+id/database2cond"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:backgroundTint="#E99963"
+            android:text="LOAD EXTERNAL LIQUID/SOLID DATABASE" />
 
         <Button
             android:id="@+id/run"
@@ -138,12 +152,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="SAVE OUTPUTFILE AS (external)" />
+        <!---
         <Button
             android:id="@+id/transpose"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:backgroundTint="#AAEB3B"
             android:text="Transpose the output" />
+            -->
         <Button
             android:id="@+id/highlight"
             android:layout_width="match_parent"
